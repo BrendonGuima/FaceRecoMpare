@@ -1,6 +1,10 @@
+using System.Collections.Concurrent;
+using System.Threading.Tasks.Dataflow;
 using Microsoft.AspNetCore.Mvc;
 using Amazon.Rekognition;
 using Amazon.Rekognition.Model;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 
 namespace FaceApiRecognizeTest.Controllers
 {
@@ -8,8 +12,9 @@ namespace FaceApiRecognizeTest.Controllers
     {
         private readonly IWebHostEnvironment _environment;
         private readonly AmazonRekognitionClient _rekognitionClient;
-        private const float similarityThreshold = 70F;
-        
+        private const float SimilarityThreshold = 70F;
+        private const int TargetImageWidth = 256;
+        private const int TargetImageHeight = 256;
 
         public FaceRecognitionApiController(IWebHostEnvironment environment)
         {
@@ -26,10 +31,10 @@ namespace FaceApiRecognizeTest.Controllers
                 return BadRequest("No image URL provided.");
             }
 
-            Amazon.Rekognition.Model.Image imageSource = new Amazon.Rekognition.Model.Image(); // Cria uma instância de Image para imagem recebida
+            Amazon.Rekognition.Model.Image imageSource = new Amazon.Rekognition.Model.Image();
             using (var httpClient = new HttpClient())
-            using (var stream = await httpClient.GetStreamAsync(imageUrl))
-            using (var ms = new MemoryStream())
+            await using (var stream = await httpClient.GetStreamAsync(imageUrl))
+            await using (var ms = new MemoryStream())
             {
                 await stream.CopyToAsync(ms);
                 var buffer = ms.ToArray();
@@ -42,42 +47,59 @@ namespace FaceApiRecognizeTest.Controllers
                 var dbImagesPath = Path.Combine(_environment.WebRootPath, "Images");
                 var dbImageFiles = Directory.GetFiles(dbImagesPath, "*.jpg");
 
-                var matchingImages = new List<string>();
+                var matchingImages = new ConcurrentBag<string>();
 
-                foreach (var dbImageFile in dbImageFiles)
+                var options = new ExecutionDataflowBlockOptions
                 {
-                    using (var dbImageStream = new FileStream(dbImageFile, FileMode.Open))
+                    MaxDegreeOfParallelism = Environment.ProcessorCount
+                };
+
+                var block = new ActionBlock<string>(async dbImageFile =>
+                {
+                    await using (var dbImageStream = new FileStream(dbImageFile, FileMode.Open))
                     {
-                        Amazon.Rekognition.Model.Image targetSource = new Amazon.Rekognition.Model.Image(); // Cria uma instância de Image para imagem da db
-                        var imageBytes = new byte[dbImageStream.Length];
-                        await dbImageStream.ReadAsync(imageBytes, 0, (int)dbImageStream.Length);
-                        targetSource.Bytes = new MemoryStream(imageBytes);
-                        
-                        
-                        if (targetSource.Bytes.Length > 0)
+                        using (var image = SixLabors.ImageSharp.Image.Load(dbImageStream))
                         {
-                            CompareFacesRequest compareFacesRequest = new CompareFacesRequest()
+                            image.Mutate(x => x.Resize(TargetImageWidth, TargetImageHeight));
+                            using (var resizedImageStream = new MemoryStream())
                             {
-                                SourceImage = imageSource,
-                                TargetImage = targetSource,
-                                SimilarityThreshold = similarityThreshold
-                            };
-                            CompareFacesResponse compareFacesResponse = _rekognitionClient.CompareFacesAsync(compareFacesRequest).Result;
-                            foreach (var detectedFace in compareFacesResponse.FaceMatches)
-                            {
-                                if (detectedFace.Similarity > similarityThreshold)
+                                image.Save(resizedImageStream, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder());
+                                resizedImageStream.Seek(0, SeekOrigin.Begin);
+
+                                Amazon.Rekognition.Model.Image targetSource = new Amazon.Rekognition.Model.Image();
+                                targetSource.Bytes = resizedImageStream;
+
+                                CompareFacesRequest compareFacesRequest = new CompareFacesRequest()
                                 {
-                                    matchingImages.Add(Path.GetFileName(dbImageFile));
-                                    break; // Sai do loop interno, pois já encontrou uma correspondência
+                                    SourceImage = imageSource,
+                                    TargetImage = targetSource,
+                                    SimilarityThreshold = SimilarityThreshold
+                                };
+                                CompareFacesResponse compareFacesResponse = await _rekognitionClient.CompareFacesAsync(compareFacesRequest);
+                                foreach (var detectedFace in compareFacesResponse.FaceMatches)
+                                {
+                                    if (detectedFace.Similarity > SimilarityThreshold)
+                                    {
+                                        matchingImages.Add(Path.GetFileName(dbImageFile));
+                                        break;
+                                    }
                                 }
                             }
                         }
                     }
+                }, options);
+
+                foreach (var dbImageFile in dbImageFiles)
+                {
+                    await block.SendAsync(dbImageFile);
                 }
+
+                block.Complete();
+                await block.Completion;
 
                 if (matchingImages.Count > 0)
                 {
-                    return Ok(matchingImages);
+                    return Ok(matchingImages.ToList());
                 }
             }
 

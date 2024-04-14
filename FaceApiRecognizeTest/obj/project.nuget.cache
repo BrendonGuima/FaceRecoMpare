@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "D/InATrFC2f5L0/RLmHdvTzQWD14XFs/8qkZumVDd54jO5cDb4aRV+QTTd1yUD2QUuYVhhxwtC7jfSZ2qdHLoQ==",
+  "dgSpecHash": "6gZMAxIXTLLc73vzWY9QUmuCtlv1+nkXzKSs1GO8AXLMf++gkD1KMy0+ruev2FapncZq+c2VVRiF4L+I0lvZyA==",
   "success": true,
   "projectFilePath": "C:\\Users\\Brend\\RiderProjects\\FaceApiRecognizeTest\\FaceApiRecognizeTest\\FaceApiRecognizeTest.csproj",
   "expectedPackageFiles": [
@@ -8,6 +8,7 @@
     "C:\\Users\\Brend\\.nuget\\packages\\awssdk.rekognition\\3.7.301.28\\awssdk.rekognition.3.7.301.28.nupkg.sha512",
     "C:\\Users\\Brend\\.nuget\\packages\\microsoft.extensions.apidescription.server\\6.0.5\\microsoft.extensions.apidescription.server.6.0.5.nupkg.sha512",
     "C:\\Users\\Brend\\.nuget\\packages\\microsoft.openapi\\1.2.3\\microsoft.openapi.1.2.3.nupkg.sha512",
+    "C:\\Users\\Brend\\.nuget\\packages\\sixlabors.imagesharp\\3.1.4\\sixlabors.imagesharp.3.1.4.nupkg.sha512",
     "C:\\Users\\Brend\\.nuget\\packages\\swashbuckle.aspnetcore\\6.5.0\\swashbuckle.aspnetcore.6.5.0.nupkg.sha512",
     "C:\\Users\\Brend\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\6.5.0\\swashbuckle.aspnetcore.swagger.6.5.0.nupkg.sha512",
     "C:\\Users\\Brend\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\6.5.0\\swashbuckle.aspnetcore.swaggergen.6.5.0.nupkg.sha512",

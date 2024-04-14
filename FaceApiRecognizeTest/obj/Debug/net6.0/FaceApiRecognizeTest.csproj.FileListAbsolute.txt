@@ -28,3 +28,4 @@ C:\Users\Brend\RiderProjects\FaceApiRecognizeTest\FaceApiRecognizeTest\obj\Debug
 C:\Users\Brend\RiderProjects\FaceApiRecognizeTest\FaceApiRecognizeTest\bin\Debug\net6.0\FaceApiRecognizeTest.staticwebassets.runtime.json
 C:\Users\Brend\RiderProjects\FaceApiRecognizeTest\FaceApiRecognizeTest\bin\Debug\net6.0\AWSSDK.Core.dll
 C:\Users\Brend\RiderProjects\FaceApiRecognizeTest\FaceApiRecognizeTest\bin\Debug\net6.0\AWSSDK.Rekognition.dll
+C:\Users\Brend\RiderProjects\FaceApiRecognizeTest\FaceApiRecognizeTest\bin\Debug\net6.0\SixLabors.ImageSharp.dll
