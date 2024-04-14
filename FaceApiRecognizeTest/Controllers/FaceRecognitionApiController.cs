@@ -8,6 +8,8 @@ namespace FaceApiRecognizeTest.Controllers
     {
         private readonly IWebHostEnvironment _environment;
         private readonly AmazonRekognitionClient _rekognitionClient;
+        private const float similarityThreshold = 70F;
+        
 
         public FaceRecognitionApiController(IWebHostEnvironment environment)
         {
@@ -17,29 +19,22 @@ namespace FaceApiRecognizeTest.Controllers
         }
 
         [HttpPost("compare")]
-        public async Task<ActionResult> CompareFaces(string imageUrl)
+        public async Task<IActionResult> CompareFaces(string imageUrl)
         {
             if (string.IsNullOrEmpty(imageUrl))
             {
                 return BadRequest("No image URL provided.");
             }
 
+            Amazon.Rekognition.Model.Image imageSource = new Amazon.Rekognition.Model.Image(); // Cria uma instância de Image para imagem recebida
             using (var httpClient = new HttpClient())
             using (var stream = await httpClient.GetStreamAsync(imageUrl))
             using (var ms = new MemoryStream())
             {
                 await stream.CopyToAsync(ms);
                 var buffer = ms.ToArray();
-                var request = new DetectFacesRequest
-                {
-                    Image = new Amazon.Rekognition.Model.Image
-                    {
-                        Bytes = new MemoryStream(buffer)
-                    },
-                    Attributes = new List<string> { "ALL" } // ou "DEFAULT" dependendo do que você precisa
-                };
-                var detectedFaces = await _rekognitionClient.DetectFacesAsync(request);
-                if (detectedFaces.FaceDetails.Count == 0)
+                imageSource.Bytes = new MemoryStream(buffer);
+                if (imageSource.Bytes == null)
                 {
                     return NotFound("No face detected in the uploaded image.");
                 }
@@ -53,39 +48,27 @@ namespace FaceApiRecognizeTest.Controllers
                 {
                     using (var dbImageStream = new FileStream(dbImageFile, FileMode.Open))
                     {
+                        Amazon.Rekognition.Model.Image targetSource = new Amazon.Rekognition.Model.Image(); // Cria uma instância de Image para imagem da db
                         var imageBytes = new byte[dbImageStream.Length];
                         await dbImageStream.ReadAsync(imageBytes, 0, (int)dbImageStream.Length);
-                        var dbDetectFacesRequest = new DetectFacesRequest
+                        targetSource.Bytes = new MemoryStream(imageBytes);
+                        
+                        
+                        if (targetSource.Bytes.Length > 0)
                         {
-                            Image = new Image
+                            CompareFacesRequest compareFacesRequest = new CompareFacesRequest()
                             {
-                                Bytes = new MemoryStream(imageBytes)
-                            },
-                            Attributes = new List<string> { "ALL" } // ou "DEFAULT" dependendo do que você precisa
-                        };
-                        var dbDetectedFaces = await _rekognitionClient.DetectFacesAsync(dbDetectFacesRequest);
-                        if (dbDetectedFaces.FaceDetails.Count > 0)
-                        {
-                            foreach (var detectedFace in detectedFaces.FaceDetails)
+                                SourceImage = imageSource,
+                                TargetImage = targetSource,
+                                SimilarityThreshold = similarityThreshold
+                            };
+                            CompareFacesResponse compareFacesResponse = _rekognitionClient.CompareFacesAsync(compareFacesRequest).Result;
+                            foreach (var detectedFace in compareFacesResponse.FaceMatches)
                             {
-                                foreach (var dbDetectedFace in dbDetectedFaces.FaceDetails)
+                                if (detectedFace.Similarity > similarityThreshold)
                                 {
-                                    var similarity = await _rekognitionClient.CompareFacesAsync(new CompareFacesRequest
-                                    {
-                                        SourceImage = new Image
-                                        {
-                                            Bytes = new MemoryStream(buffer)
-                                        },
-                                        TargetImage = new Image
-                                        {
-                                            Bytes = new MemoryStream(imageBytes)
-                                        }
-                                    });
-                                    if (similarity.FaceMatches.Count > 0 && similarity.FaceMatches[0].Similarity > 0.5)
-                                    {
-                                        matchingImages.Add(Path.GetFileName(dbImageFile));
-                                        break; // Sai do loop interno, pois já encontrou uma correspondência
-                                    }
+                                    matchingImages.Add(Path.GetFileName(dbImageFile));
+                                    break; // Sai do loop interno, pois já encontrou uma correspondência
                                 }
                             }
                         }

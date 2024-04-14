@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "XZrk0ObFbAZ4uZOpGHiE4rrEbYIzep7rrA/xiU20e2M=",
+  "Hash": "SjiuBZ3rviTQ01PTqBp2uMeV0fQDyMvdqJrMYw/K6as=",
   "Source": "FaceApiRecognizeTest",
   "BasePath": "_content/FaceApiRecognizeTest",
   "Mode": "Default",
@@ -355,6 +355,23 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\Images\\Baco-Exu-do-Blues-1.jpg"
+    },
+    {
+      "Identity": "C:\\Users\\Brend\\RiderProjects\\FaceApiRecognizeTest\\FaceApiRecognizeTest\\wwwroot\\Images\\Elon_Musk_Colorado_2022_(cropped2).jpg",
+      "SourceId": "FaceApiRecognizeTest",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Brend\\RiderProjects\\FaceApiRecognizeTest\\FaceApiRecognizeTest\\wwwroot\\",
+      "BasePath": "_content/FaceApiRecognizeTest",
+      "RelativePath": "Images/Elon_Musk_Colorado_2022_(cropped2).jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\Images\\Elon_Musk_Colorado_2022_(cropped2).jpg"
     }
   ]
 }
